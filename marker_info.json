@@ -1,0 +1,32 @@
+{
+    "marker1": {
+        "name": "Destination 1",
+        "contact": "John Doe, +123456789",
+        "image": "https://fastly.picsum.photos/id/395/1600/900.jpg?hmac=bJOgSJj9Wcer3NohLohpCmeu9DQ2TbTySNTQFN6Xgqo",
+        "rating": "3.8/5",
+        "coordinates": [
+            40.425721092692335,
+            49.91743972799402
+        ]
+    },
+    "marker2": {
+        "name": "Destination 2",
+        "contact": "Jane Doe, +987654321",
+        "image": "https://fastly.picsum.photos/id/448/1600/900.jpg?hmac=_0zJFjqxt97haLD-sbu9uh-vHKoFVLVlK1uIReRXJnQ",
+        "rating": "4.2/5",
+        "coordinates": [
+            40.40181125028619,
+            49.98333357796237
+        ]
+    },
+    "marker3": {
+        "name": "Destination 3",
+        "contact": "Alice Smith, +1122334455",
+        "image": "https://fastly.picsum.photos/id/925/1600/900.jpg?hmac=bmVlszRjAVCbzNGgLNa5uGHJvITkssCIlwLDweV6-m0",
+        "rating": "4.8/5",
+        "coordinates": [
+            40.36157683957858,
+            49.834398825986696
+        ]
+    }
+}
