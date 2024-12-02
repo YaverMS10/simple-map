@@ -82,9 +82,10 @@ def main(page: ft.Page):
         selected_marker = dest
         page.update()
 
-    def handle_edit(e):
+    def return_value(e):
+        global dropdown
         global dlg
-        dest = e.control.text
+        dest = e.control.value
 
         for marker in marker_info.values():
             if marker["name"] == dest:
@@ -117,10 +118,12 @@ def main(page: ft.Page):
         )
 
         def submit_handler(e):
+            global dlg
             updated_values = [field1.value, field2.value, field3.value, field4.value, tuple((float(field5.value), float(field6.value)))]
             submit_change(e, updated_values, dest)
+            close_dialog(None)
 
-        action = [field1, ft.Container(height=10), field2, ft.Container(), ft.Container(height=10), field3, ft.Container(height=10), field4, ft.Container(height=10),
+        action = [dropdown, ft.Container(height=10), field1, ft.Container(height=10), field2, ft.Container(), ft.Container(height=10), field3, ft.Container(height=10), field4, ft.Container(height=10),
                    field5, ft.Container(height=10), field6, ft.Container(height=10),
                    ft.ElevatedButton("Submit", bgcolor = ft.colors.BLUE_50, on_click = submit_handler)]
         
@@ -132,21 +135,38 @@ def main(page: ft.Page):
 
         page.open(dlg)
 
-    def edit_markers(e):
-        names_list = [item['name'] for item in marker_info.values()]
+    def handle_edit(e):
+        global dlg
+        global dropdown
 
-        content = ft.Column([ft.Text(size = 18, spans=[ft.TextSpan(i, ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE, color = ft.colors.BLUE_500), on_click=handle_edit)]) for i in names_list], tight = True)
-
-        dlg = ft.AlertDialog(
-            title=ft.Text(f"Adjust Markers", size = 30),
-            content=content,
+        dropdown = ft.Dropdown(
+            label="Destination",
+            hint_text="Select a Destination..",
+            options=[ft.dropdown.Option(item['name']) for item in marker_info.values()],
+            autofocus=True,
+            bgcolor=ft.colors.WHITE,
+            on_change=return_value
         )
 
+        field1 = ft.TextField(label="Location")
+        field2 = ft.TextField(label="Contact")
+        field3 = ft.TextField(label="Image URL")
+        field4 = ft.TextField(label="Rating")
+        field5 = ft.TextField(label="X Coordinate")
+        field6 = ft.TextField(label="Y Coordinate")
+
+        action = [dropdown, ft.Container(height=10), field1, ft.Container(height=10), field2, ft.Container(), ft.Container(height=10), field3, ft.Container(height=10), field4, ft.Container(height=10),
+                   field5, ft.Container(height=10), field6, ft.Container(height=10)]
+
+        dlg = ft.AlertDialog(
+            title=ft.Text("Select a Destination"),
+            actions = action,
+        )
         page.open(dlg)
     
-    login_button = ft.ElevatedButton("Login with Google", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = logingoogle, adaptive=True)
-    logout_button = ft.ElevatedButton("Logout", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = logoutgoogle, adaptive=True)
-    edit_markers_button = ft.ElevatedButton("Edit Markers", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = edit_markers, adaptive=True)
+    login_button = ft.GestureDetector(content=ft.Image(src="google_login_light.png", width=160, height=40, fit = ft.ImageFit.CONTAIN), on_tap=logingoogle, mouse_cursor=ft.MouseCursor.CLICK)
+    logout_button = ft.ElevatedButton("Logout", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = logoutgoogle)
+    edit_markers_button = ft.ElevatedButton("Edit Markers", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = handle_edit)
 
     toggle_login_buttons()
 
@@ -169,6 +189,9 @@ def main(page: ft.Page):
             drawer.indicator_color = ft.colors.WHITE,
             drawer.bgcolor = ft.colors.BLACK
 
+            login_button.content = ft.Image(src="google_login_dark.png", width=160, height=40, fit = ft.ImageFit.CONTAIN)
+            login_button.update()
+
             page.update()
 
         elif e.control.value == "Light Mode":
@@ -184,7 +207,14 @@ def main(page: ft.Page):
             drawer.indicator_color = ft.colors.BLUE_50,
             drawer.bgcolor = ft.colors.WHITE
 
+            login_button.content = ft.Image(src="google_login_light.png", width=160, height=40, fit = ft.ImageFit.CONTAIN)
+            login_button.update()
+
             page.update()
+
+    def return_main(e):
+        drawer.selected_index = 0
+        drawer.update()
 
     def handle_navigation_change(e):
         if int(e.data) == 0:
@@ -223,6 +253,7 @@ def main(page: ft.Page):
 
     drawer = ft.NavigationDrawer(
         on_change = handle_navigation_change,
+        on_dismiss = return_main,
         controls=[
             ft.Container(height=25),
             ft.NavigationDrawerDestination(
@@ -246,6 +277,7 @@ def main(page: ft.Page):
     def close_dialog(e):
         global dlg
         page.close(dlg)
+        print("Dialog Closed")
         page.update()
 
     def generate_dialog(latitude, longitude, title, image, contact, coordinates, rating):
@@ -363,8 +395,8 @@ def main(page: ft.Page):
             ref = map_ref,
             expand=True,
             configuration=map.MapConfiguration(
-                initial_center=map.MapLatitudeLongitude(40.41, 49.87),
-                initial_zoom=13,
+                initial_center=map.MapLatitudeLongitude(40.39, 49.87),
+                initial_zoom=13.2,
                 interaction_configuration=map.MapInteractionConfiguration(flags=map.MapInteractiveFlag.ALL
                 ),
                 on_tap=handle_map_tap
@@ -389,4 +421,4 @@ def main(page: ft.Page):
     )
 
     
-ft.app(main)
+ft.app(main, assets_dir = "assets")
