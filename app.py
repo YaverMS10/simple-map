@@ -1,6 +1,7 @@
 import flet as ft
 import flet.map as map
 from flet.auth.providers import GoogleOAuthProvider
+import geocoder
 from dotenv import load_dotenv
 import os
 import json
@@ -11,7 +12,16 @@ clientSecret = os.getenv('clientSecret')
 
 def main(page: ft.Page):
     dlg = None
-    selected_marker = None  
+    selected_marker = None
+
+    try:
+        g = geocoder.ip("me")
+        current_lat = g.latlng[0]
+        current_lon = g.latlng[1]
+    except:
+        current_lat = 36.188110
+        current_lon = -115.176468
+
 
     marker_layer_ref = ft.Ref[map.MarkerLayer]()
     map_ref = ft.Ref[map.Map]()
@@ -19,7 +29,7 @@ def main(page: ft.Page):
     with open("marker_info.json", "r") as f:
         marker_info = json.load(f)
 
-    page.bgcolor = ft.colors.WHITE
+    page.bgcolor = ft.Colors.WHITE
     page.theme_mode = "light"
 
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
@@ -28,7 +38,7 @@ def main(page: ft.Page):
     provider = GoogleOAuthProvider(
         client_id = clientID,
         client_secret = clientSecret,
-        redirect_url = "http://localhost:50334/oauth_callback"
+        redirect_url = "https://stuntguru.me/oauth_callback"
     )
 
     def logingoogle(e):
@@ -38,6 +48,12 @@ def main(page: ft.Page):
         global credentials
         credentials = {"Name": page.auth.user['given_name'], "Family_Name": page.auth.user['family_name'], "Picture": page.auth.user['picture'], "Email": page.auth.user['email']}
         toggle_login_buttons()
+        if page.auth.user['email'] == os.getenv('admin_email'):
+            edit_markers_button.visible = True
+        else:
+            edit_markers_button.visible = False
+        page.update()
+
 
     def logoutgoogle(e):
         page.logout()
@@ -66,7 +82,7 @@ def main(page: ft.Page):
 
         page.close(dlg)
         marker_layer_ref.current.markers = [map.Marker(
-                            content=ft.IconButton(ft.icons.LOCATION_ON, icon_color = ft.colors.RED, icon_size = 45, on_click=lambda e, values=[marker["coordinates"][0], marker["coordinates"][1], marker["name"], marker["image"], marker["contact"], marker["coordinates"], marker["rating"]]: handle_marker_tap(e, values)),
+                            content=ft.IconButton(ft.Icons.LOCATION_ON, icon_color = ft.Colors.RED, icon_size = 45, on_click=lambda e, values=[marker["coordinates"][0], marker["coordinates"][1], marker["name"], marker["image"], marker["contact"], marker["coordinates"], marker["rating"]]: handle_marker_tap(e, values)),
                             coordinates=map.MapLatitudeLongitude(marker["coordinates"][0], marker["coordinates"][1])
                         ) for marker in marker_info.values()]
         page.update()
@@ -125,7 +141,7 @@ def main(page: ft.Page):
 
         action = [dropdown, ft.Container(height=10), field1, ft.Container(height=10), field2, ft.Container(), ft.Container(height=10), field3, ft.Container(height=10), field4, ft.Container(height=10),
                    field5, ft.Container(height=10), field6, ft.Container(height=10),
-                   ft.ElevatedButton("Submit", bgcolor = ft.colors.BLUE_50, on_click = submit_handler)]
+                   ft.ElevatedButton("Submit", bgcolor = ft.Colors.BLUE_50, on_click = submit_handler)]
         
         dlg = ft.AlertDialog(
             title=ft.Text(dest),
@@ -144,7 +160,7 @@ def main(page: ft.Page):
             hint_text="Select a Destination..",
             options=[ft.dropdown.Option(item['name']) for item in marker_info.values()],
             autofocus=True,
-            bgcolor=ft.colors.WHITE,
+            bgcolor=ft.Colors.WHITE,
             on_change=return_value
         )
 
@@ -165,29 +181,30 @@ def main(page: ft.Page):
         page.open(dlg)
     
     login_button = ft.GestureDetector(content=ft.Image(src="google_login_light.png", width=160, height=40, fit = ft.ImageFit.CONTAIN), on_tap=logingoogle, mouse_cursor=ft.MouseCursor.CLICK)
-    logout_button = ft.ElevatedButton("Logout", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = logoutgoogle)
-    edit_markers_button = ft.ElevatedButton("Edit Markers", bgcolor = ft.colors.BLUE_50, color = ft.colors.PURPLE_300, on_click = handle_edit)
+    logout_button = ft.ElevatedButton("Logout", bgcolor = ft.Colors.BLUE_50, color = ft.Colors.PURPLE_300, on_click = logoutgoogle)
+    edit_markers_button = ft.ElevatedButton("Edit Markers", bgcolor = ft.Colors.BLUE_50, color = ft.Colors.PURPLE_300, on_click = handle_edit)
+    edit_markers_button.visible = False
 
     toggle_login_buttons()
 
     page.on_login = on_login
     page.on_logout = on_logout
 
-    nav_icon = ft.Container(content = ft.IconButton(ft.icons.MENU, on_click=lambda e: page.open(drawer), icon_size = 40, icon_color = ft.colors.BLUE_200), alignment = ft.alignment.top_left)
+    nav_icon = ft.Container(content = ft.IconButton(ft.Icons.MENU, on_click=lambda e: page.open(drawer), icon_size = 40, icon_color = ft.Colors.BLUE_200), alignment = ft.alignment.top_left)
 
     def change_mode(e):
         if e.control.value == 'Dark Mode':
-            page.bgcolor = ft.colors.BLACK
+            page.bgcolor = ft.Colors.BLACK
             page.theme_mode = "dark"
 
-            anchor_searchbar.view_bgcolor = ft.colors.BLACK
-            anchor_searchbar.bar_overlay_color = ft.colors.BLACK
-            anchor_searchbar.bar_bgcolor = ft.colors.BLACK
+            anchor_searchbar.view_bgcolor = ft.Colors.BLACK
+            anchor_searchbar.bar_overlay_color = ft.Colors.BLACK
+            anchor_searchbar.bar_bgcolor = ft.Colors.BLACK
             anchor_searchbar.update()
 
-            nav_icon.content.icon_color = ft.colors.WHITE
-            drawer.indicator_color = ft.colors.WHITE,
-            drawer.bgcolor = ft.colors.BLACK
+            nav_icon.content.icon_color = ft.Colors.WHITE
+            drawer.indicator_color = ft.Colors.WHITE,
+            drawer.bgcolor = ft.Colors.BLACK
 
             login_button.content = ft.Image(src="google_login_dark.png", width=160, height=40, fit = ft.ImageFit.CONTAIN)
             login_button.update()
@@ -195,17 +212,17 @@ def main(page: ft.Page):
             page.update()
 
         elif e.control.value == "Light Mode":
-            page.bgcolor = ft.colors.WHITE
+            page.bgcolor = ft.Colors.WHITE
             page.theme_mode = "light"
 
-            anchor_searchbar.view_bgcolor = ft.colors.WHITE
-            anchor_searchbar.bar_overlay_color = ft.colors.BLUE_100
-            anchor_searchbar.bar_bgcolor = ft.colors.BLUE_50
+            anchor_searchbar.view_bgcolor = ft.Colors.WHITE
+            anchor_searchbar.bar_overlay_color = ft.Colors.BLUE_100
+            anchor_searchbar.bar_bgcolor = ft.Colors.BLUE_50
             anchor_searchbar.update()
 
-            nav_icon.content.icon_color = ft.colors.BLUE_200
-            drawer.indicator_color = ft.colors.BLUE_50,
-            drawer.bgcolor = ft.colors.WHITE
+            nav_icon.content.icon_color = ft.Colors.BLUE_200
+            drawer.indicator_color = ft.Colors.BLUE_50,
+            drawer.bgcolor = ft.Colors.WHITE
 
             login_button.content = ft.Image(src="google_login_light.png", width=160, height=40, fit = ft.ImageFit.CONTAIN)
             login_button.update()
@@ -243,10 +260,10 @@ def main(page: ft.Page):
                 page.update()
             
             else:
-                content = ft.Column([ft.Image(src = credentials['Picture'], height = 400, width = 400),
-                                    ft.Container(ft.Text("Name: " + credentials["Name"], size = 15)),
-                                    ft.Container(ft.Text("Surname: " + credentials['Family_Name'], size = 15)),
-                                    ft.Container(ft.Text("Email: " + credentials['Email'], size = 15))], tight = True)
+                content = ft.Column([ft.Image(src = credentials['Picture'], height = 200, width = 200),
+                                    ft.Text("Name: " + credentials["Name"], size = 15),
+                                    ft.Text("Surname: " + credentials['Family_Name'], size = 15),
+                                    ft.Text("Email: " + credentials['Email'], size = 15)], tight = True)
                 dlg = ft.AlertDialog(title = ft.Text("Profile"), content = content)
                 page.open(dlg)
                 page.update()
@@ -258,20 +275,20 @@ def main(page: ft.Page):
             ft.Container(height=25),
             ft.NavigationDrawerDestination(
                 label= "Home",
-                icon=ft.icons.HOME,
+                icon=ft.Icons.HOME,
             ),
             ft.Divider(thickness=2),
             ft.NavigationDrawerDestination(
                 label="Settings",
-                icon_content=ft.Icon(ft.icons.SETTINGS),
+                icon=ft.Icon(ft.Icons.SETTINGS),
             ),
             ft.NavigationDrawerDestination(
                 label="Profile",
-                icon_content=ft.Icon(ft.icons.PERSON),
+                icon=ft.Icon(ft.Icons.PERSON),
             ),
         ],
-        indicator_color = ft.colors.BLUE_200,
-        bgcolor = ft.colors.WHITE,
+        indicator_color = ft.Colors.BLUE_200,
+        bgcolor = ft.Colors.WHITE,
     )
 
     def close_dialog(e):
@@ -328,7 +345,7 @@ def main(page: ft.Page):
             selected_marker = None
 
             marker_layer_ref.current.markers = [map.Marker(
-                            content=ft.IconButton(ft.icons.LOCATION_ON, icon_color = ft.colors.RED, icon_size = 45, on_click=lambda e, values=[marker["coordinates"][0], marker["coordinates"][1], marker["name"], marker["image"], marker["contact"], marker["coordinates"], marker["rating"]]: handle_marker_tap(e, values)),
+                            content=ft.IconButton(ft.Icons.LOCATION_ON, icon_color = ft.Colors.RED, icon_size = 45, on_click=lambda e, values=[marker["coordinates"][0], marker["coordinates"][1], marker["name"], marker["image"], marker["contact"], marker["coordinates"], marker["rating"]]: handle_marker_tap(e, values)),
                             coordinates=map.MapLatitudeLongitude(marker["coordinates"][0], marker["coordinates"][1])) for marker in marker_info.values()]
 
             page.update()
@@ -370,7 +387,7 @@ def main(page: ft.Page):
 
     anchor_searchbar = ft.SearchBar(
             view_elevation = 4,
-            divider_color = ft.colors.BLUE,
+            divider_color = ft.Colors.BLUE,
             bar_hint_text = "Search Destinations",
             view_hint_text = "Choose from Destinations (Press Enter to Submit)",
             on_submit = handle_search_submit,
@@ -378,10 +395,10 @@ def main(page: ft.Page):
             controls = [
               ft.ListTile(title = ft.Text(list(marker_info.values())[i]['name']), on_click = close_anchor, data = i) for i in range(len(marker_info))
             ],
-            view_bgcolor = ft.colors.WHITE,
-            bar_overlay_color = ft.colors.BLUE_100,
-            view_surface_tint_color = ft.colors.WHITE,
-            bar_bgcolor = ft.colors.BLUE_50,
+            view_bgcolor = ft.Colors.WHITE,
+            bar_overlay_color = ft.Colors.BLUE_100,
+            view_surface_tint_color = ft.Colors.WHITE,
+            bar_bgcolor = ft.Colors.BLUE_50,
 
     )
 
@@ -391,16 +408,13 @@ def main(page: ft.Page):
                            ft.Container(content = anchor_searchbar, alignment = ft.alignment.top_center, expand = True),
                            edit_markers_button, login_button, logout_button]),
         
-        map.Map(
+        m:=map.Map(
             ref = map_ref,
             expand=True,
-            configuration=map.MapConfiguration(
-                initial_center=map.MapLatitudeLongitude(40.39, 49.87),
-                initial_zoom=13.2,
-                interaction_configuration=map.MapInteractionConfiguration(flags=map.MapInteractiveFlag.ALL
-                ),
-                on_tap=handle_map_tap
-            ),
+            initial_center=map.MapLatitudeLongitude(current_lat, current_lon),
+            initial_zoom=14,
+            interaction_configuration=map.MapInteractionConfiguration(flags=map.MapInteractiveFlag.ALL),
+            on_tap=handle_map_tap,
             layers=[
                 map.TileLayer(
                     url_template="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -410,15 +424,21 @@ def main(page: ft.Page):
                     ref=marker_layer_ref,
                     markers=[
                         map.Marker(
-                            content=ft.IconButton(ft.icons.LOCATION_ON, icon_color = ft.colors.RED, icon_size = 45, on_click=lambda e, values=[marker["coordinates"][0], marker["coordinates"][1], marker["name"], marker["image"], marker["contact"], marker["coordinates"], marker["rating"]]: handle_marker_tap(e, values)),
+                            content=ft.IconButton(ft.Icons.LOCATION_ON, icon_color = ft.Colors.RED, icon_size = 30, on_click=lambda e, values=[marker["coordinates"][0], marker["coordinates"][1], marker["name"], marker["image"], marker["contact"], marker["coordinates"], marker["rating"]]: handle_marker_tap(e, values)),
                             coordinates=map.MapLatitudeLongitude(marker["coordinates"][0], marker["coordinates"][1]),
                             alignment=ft.alignment.bottom_center
                         ) for marker in marker_info.values()
                     ],
                 ),
             ],
-        )
+        ),
+        ft.Row(controls = [
+            ft.OutlinedButton("Rotate 90", on_click=lambda e: m.rotate_from(90)),
+            ft.OutlinedButton("Rotate -90", on_click=lambda e: m.rotate_from(-90)),
+            ft.OutlinedButton("Zoom in", on_click=lambda e: m.zoom_in(animation_duration=ft.Duration(seconds=2))),
+            ft.OutlinedButton("Zoom out", on_click=lambda e: m.zoom_out(animation_duration=ft.Duration(seconds=2)))
+        ])
     )
 
     
-ft.app(main, assets_dir = "assets")
+ft.app(main, assets_dir = "assets", port=8000)
